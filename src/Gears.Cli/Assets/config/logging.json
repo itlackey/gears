@@ -1,0 +1,61 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft": "Warning",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }
+  },
+  "Serilog": {
+    "Using": ["Serilog.Sinks.Console", "Serilog.Sinks.File", "Serilog.Sinks.MSSqlServer"],
+    "Enrich": ["FromLogContext", "WithMachineName", "WithThreadId"],
+    "Properties": {
+      "Application": "Sample"
+    },
+    "MinimumLevel": "Debug",
+    "Override": [{"Microsoft": "Warning"}],
+    "WriteTo": [
+      {
+        "Name": "Console",
+        "Args": {}
+      },
+      {
+        "Name": "File",
+        "Args": {
+          "restrictedToMinimumLevel": "Information",
+          "path": ".logs/log.txt",
+          "rollingInterval": "Day",
+          "retainedFileCountLimit": null
+        }
+      }
+      // {
+      //   "Name": "MSSqlServer",
+      //   "Args": {
+      //     "connectionString": "",
+      //     "sinkOptionsSection": {
+      //       "tableName": "Log",
+      //       "autoCreateSqlTable": true
+      //     },
+      //     "columnOptions": {
+      //       "addStandardColumns": ["LogEvent"],
+      //       "removeStandardColumns": ["MessageTemplate", "Properties"],
+      //       "additionalColumns": [
+      //         {
+      //           "columnName": "ReportName",
+      //           "allowNull": true,
+      //           "dataType": "nvarchar",
+      //           "dataLength": 255
+      //         },
+      //         {
+      //           "columnName": "Application",
+      //           "allowNull": true,
+      //           "dataType": "nvarchar",
+      //           "dataLength": 255
+      //         }
+      //       ]
+      //     }
+      //   }
+      // }
+    ]
+  }
+}
