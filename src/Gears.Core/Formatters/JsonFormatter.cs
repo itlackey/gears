@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -13,13 +14,16 @@ namespace Gears.Formatters
 
         public string DefaultFileExtension => ".json";
 
-        public async Task<string> GenerateContentAsync(PluginConfiguration plugingConfig, dynamic records)
+        public Task<string> GenerateContentAsync(PluginConfiguration plugingConfig, dynamic records)
         {
-            return await Task.Run(() => JsonSerializer.Serialize(records,
+            object data = records;
+            var content = JsonSerializer.Serialize(data,
             new JsonSerializerOptions
             {
-                WriteIndented = plugingConfig.Args.GetValue<bool>("prettyPrint", true)
-            }));
+                WriteIndented = plugingConfig?.Args?.GetValue<bool>("prettyPrint", true) ?? true
+            });
+
+            return Task.FromResult(content);
         }
     }
 }

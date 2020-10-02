@@ -1,0 +1,10 @@
+{
+  "Plugins": {
+    "Paths": ["i2.gears.plugins/bin/Debug/netstandard2.0/i2.gears.plugins.dll"]
+  },
+  "Reports": {
+    "Simple": {
+      "Enabled": true
+    }
+  }
+}

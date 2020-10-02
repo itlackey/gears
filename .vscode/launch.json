@@ -9,12 +9,12 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
-      "program": "${workspaceFolder}src/Gears/bin/Debug/netcoreapp3.1/Gears.dll",
+      "program": "${workspaceFolder}/src/Gears.Cli/bin/Debug/netcoreapp3.1/Gears.Cli.dll",
       "args": ["--reports", "all"],
       "env": {
         "DOTNET_ENVIRONMENT": "Development"
       },
-      "cwd": "${workspaceFolder}",
+      "cwd": "${workspaceFolder}/src/Gears.Cli/",
       "stopAtEntry": false,
       "console": "internalConsole"
     }

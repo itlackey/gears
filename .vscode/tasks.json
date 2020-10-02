@@ -15,7 +15,7 @@
         "/consoleloggerparameters:NoSummary"
       ],
       "options": {
-        "cwd": "{workspaceFolder}/src/Gears"
+        "cwd": "${workspaceFolder}/src/Gears.Cli"
       },
       "group": "build",
       "presentation": {

@@ -12,6 +12,8 @@ using System.Linq;
 using System.Diagnostics;
 using Serilog;
 using Gears.Services;
+using Gears.Core.Plugins;
+using System.Collections.Generic;
 
 namespace Gears
 {
@@ -110,9 +112,16 @@ namespace Gears
                         .RegisterFormatters()
                         .RegisterOutputs();
 
+                        services.AddSingleton<IServiceCollection>(services);
+                        services.AddTransient<IPluginLoader, PluginLoader>();
+
+
+
                     })
                     .UseSerilog()
                     .Build();
+                // var loader = host.Services.GetService<IPluginLoader>();// new PluginLoader(, services);
+                // loader.ScanAndLoad(new string[] { "i2.gears.plugins/bin/Debug/netstandard2.0/i2.gears.plugins.dll" });
 
 
                 command.Handler = CommandHandler.Create<string[], string[]>(RunAsync);
@@ -144,9 +153,13 @@ namespace Gears
             }
             else if (reports?.Count() > 0)
             {
+                var pluginPaths = configuration.GetSection("Plugins:Paths").Get<string[]>();
+
+                //.GetValue<IEnumerable<string>>("Paths");
+                var pluginLoader = host.Services.GetRequiredService<IPluginLoader>();
+                pluginLoader.ScanAndLoad(pluginPaths.ToArray());
+
                 var reportRunner = host.Services.GetService<IReportRunner>();
-
-
                 var results = await reportRunner.RunReportsAsync(reports);
 
                 timer.Stop();

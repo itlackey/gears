@@ -36,13 +36,14 @@ namespace Gears.Reports
                     .Where(r => reportKeys.Any(x => x == r.Key))
                     .ToDictionary(x => x.Key, x => x.Value);
 
-            reportsToRun = reportsToRun
+
+            reportsToRun = reportsToRun?
                 .Where(x => x.Value.Enabled)
                 .ToDictionary(x => x.Key, x => x.Value);
 
             //ToDo: report disabled reports...
 
-            reportsToRun = reportsToRun.ToDictionary(x => x.Key, x =>
+            reportsToRun = reportsToRun?.ToDictionary(x => x.Key, x =>
             {
                 if (x.Value.Output == null || x.Value.Output.Count == 0)
                 {
@@ -55,7 +56,7 @@ namespace Gears.Reports
                         Type = x.Value.Args.GetValue<string>("OutputType", "Console"),
                         Formatter = new PluginConfiguration
                         {
-                            Type = x.Value.Args.GetValue<string>("OutputFormat", "CSV")
+                            Type = x.Value.Args.GetValue<string>("OutputFormat", "Json")
                         }
                     };
 
@@ -73,12 +74,12 @@ namespace Gears.Reports
                 {
                     x.Value.Input = new PluginConfiguration
                     {
-                        Type = "MSSQL"
+                        Type = "JsonFile"
                     };
                 }
 
                 if (string.IsNullOrEmpty(x.Value.Input.Type))
-                    x.Value.Input.Type = "MSSQL";
+                    x.Value.Input.Type = "JsonFile";
 
                 if (x.Value.Input.Args == null)
                     x.Value.Input.Args = x.Value.Args;
@@ -86,8 +87,8 @@ namespace Gears.Reports
                 if (!x.Value.Input.Args.GetValue<bool?>("RunBatch").HasValue)
                     x.Value.Input.Args["RunBatch"] = "false";
 
-                if (string.IsNullOrEmpty(x.Value.Input.Args.GetValue<string>("QueryPath")))
-                    x.Value.Input.Args["QueryPath"] = $"Assets/queries/{x.Key}.sql";
+                if (string.IsNullOrEmpty(x.Value.Input.Args.GetValue<string>("Path")))
+                    x.Value.Input.Args["Path"] = $"assets/input/{x.Key}.json";
 
                 x.Value.Input.ReportName = x.Key;
                 x.Value.ReportName = x.Key;
@@ -102,7 +103,7 @@ namespace Gears.Reports
                     {
                         item.Value.Formatter = new PluginConfiguration
                         {
-                            Type = "CSV"
+                            Type = "Json"
                         };
                     }
                     //Use the key as the type if none is specified

@@ -3,5 +3,10 @@
 		"**/bin": true,
 		"**/obj": true
 	},
-	"cSpell.words": ["DBTS", "Serilog", "covid"]
+	"cSpell.words": [
+		"DBTS",
+		"Expando",
+		"Serilog",
+		"covid"
+	]
 }

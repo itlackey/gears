@@ -17,6 +17,8 @@ namespace Gears
 
         public string ReportName { get; set; }
 
+        public IEnumerable<string> PluginPaths { get; set; } = new string[] { };
+
         public bool Enabled { get; set; } = true;
 
         public PluginConfiguration Input { get; set; }

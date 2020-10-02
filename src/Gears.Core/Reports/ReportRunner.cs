@@ -1,7 +1,10 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Gears.Core.Plugins;
+using Gears.Core.Services;
 using Gears.Formatters;
 using Gears.Outputs;
 using Gears.Reports;
@@ -16,20 +19,25 @@ namespace Gears
     public class ReportRunner : IReportRunner
     {
         private readonly IPluginFactory pluginFactory;
-        private readonly IBatchService batchService;
+        private readonly IBatchServiceFactory batchServiceFactory;
+        private readonly IConfiguration configuration;
         private readonly ReportConfigurationBuilder configurationBuilder;
+        private readonly IPluginLoader pluginLoader;
         private readonly ILogger<ReportRunner> logger;
 
         public ReportRunner(
             IPluginFactory pluginFactory,
-            IBatchService batchService,
+            IBatchServiceFactory batchServiceFactory,
             IConfiguration configuration,
             ReportConfigurationBuilder configurationBuilder,
+            IPluginLoader pluginLoader,
             ILogger<ReportRunner> logger)
         {
             this.pluginFactory = pluginFactory;
-            this.batchService = batchService;
+            this.batchServiceFactory = batchServiceFactory;
+            this.configuration = configuration;
             this.configurationBuilder = configurationBuilder;
+            this.pluginLoader = pluginLoader;
             this.logger = logger;
         }
 
@@ -37,7 +45,7 @@ namespace Gears
         {
             var reportsToRun = configurationBuilder.BuildReportConfigurations(reports);
 
-            if (reportsToRun?.Count() == 0)
+            if (reportsToRun?.Any() != true)
             {
                 logger.LogInformation("No reports to run, exiting");
                 return new Dictionary<string, ReportResult>()
@@ -47,6 +55,9 @@ namespace Gears
             }
 
             logger.LogInformation("Running Report(s): {ReportNames}", String.Join(", ", reportsToRun.Select(r => r.Key)));
+
+            var pluginPaths = reportsToRun.SelectMany(r => r.Value.PluginPaths).Distinct().ToArray();
+            pluginLoader.ScanAndLoad(pluginPaths);
 
             var results = new Dictionary<string, ReportResult>();
             foreach (var report in reportsToRun)
@@ -111,7 +122,7 @@ namespace Gears
 
             var data = await input.GetDataAsync(reportConfig.Value.Input);
 
-            if (data != null && data.Count > 0)
+            if (data != null) // && data.Count > 0)
             {
                 if (reportConfig.Value.Output.Count > 0)
                 {
@@ -134,26 +145,36 @@ namespace Gears
                                 {
 
                                     var records = data;
+                                    var batchService = batchServiceFactory.GetBatchService(reportConfig.Value.Input);
 
                                     if (reportConfig.Value.Input.Args.ShouldRunBatch())
                                     {
                                         records = batchService.FilterRecordsByOutput(outputConfig.Value, data);
                                     }
-                                    logger.LogInformation("Delivering results of {ReportName} to {Output} using {Formatter} format",
-                                              reportConfig.Key, output.Key, formatter.Key ?? "the default");
 
-
-                                    ReportResult result = await output.DeliveryAsync(records, outputConfig.Value, formatter);
-
-                                    logger.LogInformation("Delivered results of {ReportName} to {Output} using {Formatter} format",
-                                              reportConfig.Key, output.Key, formatter.Key ?? "the default");
-
-                                    if (reportConfig.Value.Input.Args.ShouldRunBatch())
+                                    if (HasData(records))
                                     {
-                                        logger.LogInformation("Recording batch for {ReportName} - {OutputName}",
-                                            reportConfig.Key, outputConfig.Key);
+                                        logger.LogInformation("Delivering results of {ReportName} to {Output} using {Formatter} format",
+                                                  reportConfig.Key, output.Key, formatter.Key ?? "the default");
 
-                                        await batchService.RecordBatchAsync(outputConfig.Value, result.Data);
+
+                                        ReportResult result = await output.DeliveryAsync(records, outputConfig.Value, formatter);
+
+                                        logger.LogInformation("Delivered results of {ReportName} to {Output} using {Formatter} format",
+                                                  reportConfig.Key, output.Key, formatter.Key ?? "the default");
+
+                                        if (reportConfig.Value.Input.Args.ShouldRunBatch())
+                                        {
+                                            logger.LogInformation("Recording batch for {ReportName} - {OutputName}",
+                                                reportConfig.Key, outputConfig.Key);
+
+                                            await batchService.RecordBatchAsync(outputConfig.Value, result.Data);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        logger.LogInformation("No results after batch filter for {ReportName} with {Input} {Transformer}",
+                                                          reportConfig.Key, input?.Key, transformer?.Key ?? "Default");
                                     }
                                 }
                                 else
@@ -195,5 +216,15 @@ namespace Gears
             return reportResult;
         }
 
+        private static dynamic HasData(dynamic records)
+        {
+            var result = records != null;
+
+            var enumerable = records as IEnumerable<object>;
+            if (enumerable != null && enumerable.Count() == 0)
+                result = false;
+
+            return result;
+        }
     }
 }

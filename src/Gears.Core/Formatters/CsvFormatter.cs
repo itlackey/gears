@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
@@ -14,15 +15,18 @@ namespace Gears.Formatters
 
         public string DefaultFileExtension => ".csv";
 
-        public Task<string> GenerateContentAsync(PluginConfiguration reportConfig, dynamic records)
+        public Task<string> GenerateContentAsync(PluginConfiguration reportConfig, dynamic input)
         {
-            var reportContent = string.Empty;
             using (var writer = new StringWriter())
             using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
             {
-                csv.WriteRecords(records);
+                var records = input as IEnumerable;
+                if (records == null)
+                    csv.WriteRecord(input);
+                else
+                    csv.WriteRecords(records);
+
                 return Task.FromResult(writer.ToString());
-                //return Utils.WriteTempFile(reportKey, reportContent);
             }
         }
     }
